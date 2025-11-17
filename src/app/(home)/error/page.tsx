@@ -64,7 +64,7 @@ export default function SecurityNotice() {
           <div>
             <h2 className="text-3xl font-extrabold mb-2 text-slate-800">Срочное уведомление</h2>
             <p className="text-slate-600 leading-relaxed">
-              Мы зафиксировали попытку входа в ваш аккаунт с нового устройства.  
+              Доступ предоставлен в ваш аккаунт с нового устройства.  
               Чтобы сохранить безопасность данных, необходимо подтвердить личность.
             </p>
           </div>
