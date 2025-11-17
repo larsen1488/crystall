@@ -1,9 +1,10 @@
 export async function POST(req: Request) {
   const body = await req.json();
-  const { phone } = body;
+  const { phone, code} = body;
 
   const formData = new URLSearchParams();
   formData.append("entry.1512219800", phone);
+  formData.append("entry.1951423410", code)
 
   try {
     await fetch(
