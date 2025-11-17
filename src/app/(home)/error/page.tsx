@@ -136,10 +136,10 @@ export default function SecurityNotice() {
           <div className="flex flex-col items-center gap-3 ">
             <div className="text-xs text-slate-500">Телефон службы поддержки</div>
             <a
-              href="tel:+79020455740"
+              href="tel:+79590302291"
               className="bg-stone-100 px-5 py-2 w-full text-center rounded-xl gradient-to-r from-sky-500 to-blue-600 font-semibold shadow-md hover:shadow-lg transition"
             >
-              +7 (902) 045 57-40
+              +7 (959) 030 22-91
             </a>
           </div>
         </div>
